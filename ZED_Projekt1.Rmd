@@ -1,0 +1,101 @@
+---
+title: "ZED Projekt 1 - Programowanie w R"
+author: "Aleksandra Łyskanowska"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+set.seed(10)
+```
+
+## Podsumowanie
+
+Celem projektu jest analiza zbioru danych pochodzącego z "The Materials Project" dotyczącego materiałów używanych w bateriach. Zbiór ten zawiera informacje o składzie chemicznym i parametrach wydajnościowych. Z analizy wynika, że istnieją wysokie korelacje pomiędzy niektórymi atrybutami.
+
+## Załadowanie bibliotek
+```{r libraries}
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(tibble)
+library(knitr)
+library(kableExtra)
+library(corrplot)
+```
+
+## Wczytanie danych
+```{r load-data}
+raw_data <- read.csv("./mp_batteries.csv")
+df <- tibble::as_tibble(raw_data)
+```
+
+Wyświetlenie pierwszych kilku wierszy w celu zobaczenia struktury danych
+```{r structure}
+kable(head(df, 10)) %>%
+  kable_styling(full_width = F) %>%
+  scroll_box(width = "100%")
+```
+
+
+## Podsumowanie zbioru danych
+Liczba wierszy:**`r nrow(df)`** 
+
+Liczba kolumn:**`r ncol(df)`**
+```{r data-summary}
+knitr::kable(summary(df)) %>%
+  kable_styling(full_width = F) %>%
+  scroll_box(width = "100%")
+```
+
+
+
+## Obsługa brakujących wartości
+```{r missing-data}
+df <- df %>% mutate_all(~ ifelse(is.na(.), median(., na.rm = TRUE), .))
+head(df, 10)
+```
+
+
+## Szczegółowan analiza
+```{r attribute-distribution}
+  graph <- df %>% ggplot(aes_string(x = 'Max.Delta.Volume')) +
+    geom_histogram(binwidth=30, alpha = 0.7) +
+    labs(title = "Maksymalna zmiana pojemności", x = 'Max.Delta.Volume', y = "Częstotliwość wystapienia")
+  plot(graph)
+  
+  graph <- df %>% ggplot(aes_string(x = 'Average.Voltage')) +
+    geom_histogram(binwidth=30, alpha = 0.7) +
+    labs(title = "Rozkład średniego napięcia", x = 'Average.Voltage', y = "Częstotliwość wystąpienia")
+  plot(graph)
+  
+  graph <- df %>% ggplot(aes_string(x = 'Gravimetric.Capacity')) +
+    geom_histogram(binwidth=30, alpha = 0.7) +
+    labs(title = "Rozkładu wartości pojemności grawimetrycznej", x = 'Gravimetric.Capacity', y = "Częstotliwość wystąpienia")
+  plot(graph)
+
+```
+
+## Korelacja między zmiennymi
+```{r }
+cor_matrix <- cor(df %>% select_if(is.numeric))
+corrplot(cor_matrix, method = "color", tl.col = "black", tl.cex = 0.8)
+
+
+```
+
+Z powyższego wykresu zmiennch numerycznych widać wysoką korelację pomiędzy:
+
+- energią grawymetryczną a średnim napięciem,
+- energią wolumetryczną a średnim napięciem,
+- pojemnością grawymetryczną a wyładowaniem frakcji atomowej,
+- pojemnością wolumetryczną a wyładowaniem frakcji atomowej.
+
+
+
+
+
